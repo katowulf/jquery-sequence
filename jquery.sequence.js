@@ -2,10 +2,7 @@
 (function($) {
    var undef;
 
-   // add into the ws scope
-   $.ws = $.ws || {};
-
-   var Sequence = $.ws.Sequence = function() {
+   var Sequence = $.Sequence = function() {
       this.master     = $.Deferred();           // the master Deferred object which will resolve after calling end()
       this.last       = $.Deferred().resolve(); // a dummy placeholder, to get the ball rolling
       this.returnVals = [];                     // results from all steps as they are fulfilled
@@ -218,7 +215,7 @@
     *   }
     *   var testScope = new TestScope();
     *
-    *   $.ws.Sequence.start()
+    *   Sequence.start()
     *      // register some functions
     *      .register( 'add', function(a, b) { return a + b; }, { defaults: [ 0, 1 ], prevPos: 0 } )
     *      .register( 'sum',
