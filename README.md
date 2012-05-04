@@ -292,7 +292,7 @@ This is essentially the same as calling `new $.Sequence()`, just a little syntac
 
 ### end()
 
-> `void end()`<br />
+> `void end()`
 > @return {[jQuery.Deferred](http://api.jquery.com/category/deferred-object/)} a promise with then/done/fail/always methods
 
 Complete all steps and return a promise which will resolve with all the return values from each step.
@@ -323,7 +323,7 @@ in order to retrieve all the results from each step.
 
 ### handle()
 
-> `Sequence handle( [scope], [opts], fx, [args...] )<br />
+> `Sequence handle( [scope], [opts], fx, [args...] )`<br />
 > @param `scope` {Object} set the `this` instance inside of fx<br />
 > @param `opts` {object} a hash containing options for the fx call (see details below)<br />
 > @param `fx` {function} the function to be executed, which must accept a callback<br />
