@@ -41,6 +41,7 @@
 </style>
 
 <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script type="text/javascript" src="normalizeconsole.js"></script>
 <script type="text/javascript" src="jquery.sequence.js"></script>
 <script type="text/javascript">
 jQuery(function($) {
@@ -295,38 +296,6 @@ jQuery(function($) {
       });
    }
 
-
-   /*********************************
-     * Make sure console exists. If not,
-     * then create some dummy functions
-     * so we don't have to if/else everything
-     *********************************/
-    var console = window.console||{
-        log: function() {},
-        warn: function() {},
-        error: function() {}
-    };
-
-    // IE 9 won't allow us to call console.log.apply (WTF IE!) It also reports typeof(console.log) as 'object' (UNH!)
-    // this little mojo will fix that up for our tests
-    if (Function.prototype.bind && console && typeof console.log == "object") {
-       [
-         "log","info","warn","error","assert","dir","clear","profile","profileEnd"
-       ].forEach(function (method) {
-               console[method] = this.call(console[method], console);
-            }, Function.prototype.bind);
-    }
-
-    /**
-     * Not all consoles support grouping, so adapt those if necessary
-     */
-    (typeof(console.group) === 'function') || (console.group = function(msg) {
-        console.log("\n------------\n"+msg+"\n------------\n");
-    });
-    (typeof(console.groupEnd) === 'function') || (console.groupEnd = function() {
-        //console.log("\n\n");
-    });
-
     var $div;
     var log = {
         group: function(title) {
@@ -340,7 +309,9 @@ jQuery(function($) {
         },
 
         msg: function() {
-            console.log.apply(console, $.makeArray(arguments));
+            // use jQuery.makeArray because IE 9 won't allow us to call console.log.apply (WTF IE!)
+            // it also reports typeof(console.log) as 'object' (UNH!)
+            console.log.apply(console, arguments);
             $div.append('<p>'+(arguments.length > 1? arguments[0]+': '+_val(arguments[1]) : _val(arguments[0]))+'</p>');
         },
 
