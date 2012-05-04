@@ -292,7 +292,7 @@ This is essentially the same as calling `new $.Sequence()`, just a little syntac
 
 ### end()
 
-> `void end()`
+> `void end()`<br />
 > @return {[jQuery.Deferred](http://api.jquery.com/category/deferred-object/)} a promise with then/done/fail/always methods
 
 Complete all steps and return a promise which will resolve with all the return values from each step.
@@ -321,13 +321,13 @@ in order to retrieve all the results from each step.
 ```
 
 
-### handle
+### handle()
 
-> `Sequence handle( [scope], [opts], fx, [args...] )
-> @param `scope` {Object} set the `this` instance inside of fx
-> @param `opts` {object} a hash containing options for the fx call (see details below)
-> @param `fx` {function} the function to be executed, which must accept a callback
-> @param `args` zero or more arguments passed to `fx` when it is invoked
+> `Sequence handle( [scope], [opts], fx, [args...] )<br />
+> @param `scope` {Object} set the `this` instance inside of fx<br />
+> @param `opts` {object} a hash containing options for the fx call (see details below)<br />
+> @param `fx` {function} the function to be executed, which must accept a callback<br />
+> @param `args` zero or more arguments passed to `fx` when it is invoked<br />
 > @return {Sequence}
 
 Call `fx`, which represents any function that invokes a callback on completion. Any number of arguments may be passed to `fx` by simply including them after the function to be executed.
@@ -446,16 +446,15 @@ Examples:
 
 Note that, in the case of an array, a new index is spliced into the array (there is no placeholder)
 
-### register
+### register()
 
-> `Sequence register( fxName, fx, [opts] )
-> @param `fxName` {string} alias for the function that will be used with `run` to call it later
-> @param `fx` {function} the function to be executed whenever `run(fxName)` is invoked
-> @param `opts` {object} a hash containing config properties (see below)
+> `Sequence register( fxName, fx, [opts] )<br />
+> @param `fxName` {string} alias for the function that will be used with `run` to call it later<br />
+> @param `fx` {function} the function to be executed whenever `run(fxName)` is invoked<br />
+> @param `opts` {object} a hash containing config properties (see below)<br />
+> @return {Sequence}
 
 Register a method which may then be executed multiple times by calling `run`
-
-<strong>returns</strong>: Sequence
 
 The `opts` hash may contain any of the following:
    - {int}        cbPos     if specified, a callback is spliced into the arguments at this position
@@ -510,22 +509,22 @@ Examples:
      });
 ```
 
-### run
+### run()
 
-> `Sequence run( [scope], fxName, [args...] )`
-> @param `scope`: {Object} set the `this` instance inside of `fx`
-> @param `fx` {function} the function to be executed whenever `run(fxName)` is invoked
-> @param `args` any number of arguments to pass into `fx` when it is invoked
+> `Sequence run( [scope], fxName, [args...] )`<br />
+> @param `scope`: {Object} set the `this` instance inside of `fx`<br />
+> @param `fx` {function} the function to be executed whenever `run(fxName)` is invoked<br />
+> @param `args` any number of arguments to pass into `fx` when it is invoked<br />
 > @return {Sequence}
 
 Run any function added with `register` (see register() for examples and details)
 
 
-### then
+### then()
 
-> `Sequence then( fx [, errorFxn] )
-> @param `fx` {function} the function to invoke when previous step completes
-> @param `errorFxn` {function} called if the previous step fails with error condition
+> `Sequence then( fx [, errorFxn] )<br />
+> @param `fx` {function} the function to invoke when previous step completes<br />
+> @param `errorFxn` {function} called if the previous step fails with error condition<br />
 > @return {Sequence}
 
 Get the results of the previous step from sequence (once it resolves) and do something with it outside of the sequence.
@@ -572,23 +571,23 @@ Just like jQuery.Deferred, then() accepts an error handler as well:
         .fail( ... ) // never called!
 ```
 
-### wait
+### wait()
 
-> `Sequence wait( howlong )`
-> @param `howlong` {int} milliseconds
+> `Sequence wait( howlong )`<br />
+> @param `howlong` {int} milliseconds<br />
 > @return {Sequence}
 
 Wait a specified length before invoking the next step of the sequence (just a good ole fashion sleep() method).
 
 This does not add any values to the array of results received after end() is called. The result of the previous step is passed on to the next step as if wait() wasn't in the middle.
 
-### wrap
+### wrap()
 
-> `Sequence wrap( [scope], [opts], fx, [args...] )`
-> @param `scope` {Object} set the `this` instance inside of fx
-> @param `opts` {object} a hash containing options for the fx call (see description above)
-> @param `fx` {function} the function to be executed, which may return a value
-> @param `args` zero or more arguments passed to `fx` when it is invoked
+> `Sequence wrap( [scope], [opts], fx, [args...] )`<br />
+> @param `scope` {Object} set the `this` instance inside of fx<br />
+> @param `opts` {object} a hash containing options for the fx call (see description above)<br />
+> @param `fx` {function} the function to be executed, which may return a value<br />
+> @param `args` zero or more arguments passed to `fx` when it is invoked<br />
 > @return {Sequence}
 
 Wrap `fx`, which returns a value instead of invoking a callback, and continue the sequence. Any number of arguments
