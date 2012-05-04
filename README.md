@@ -7,7 +7,9 @@ remove the callback nesting craziness.
 We can handle any sort of callback structure (callback is first, last, or even inside a hash like jQuery.fn.animate).
 We can also read in results of previous step anywhere into the next method's arguments.
 
-*   [Install](#install) *   [Basics](#basics) *   [Error Handling](#error-handling)
+*   [Install](#install)
+*   [Basics](#basics)
+*   [Error Handling](#error-handling)
 *   [Advanced](#advanced)
     *   [Position the callback](#position-the-callback)
     *   [Nested callbacks](#nested-callbacks)
@@ -88,7 +90,6 @@ function doMathLater(a, b) {
 function doMathNow(a, b) {
     return a + b;
 }
-
 
 // create a new sequence
 $.Sequence.start()
@@ -394,7 +395,18 @@ Sequence.ERR can be used to insert an error callback into the arguments. And, of
 
 All possible keys in the `opts` hash:
 <ul>
-   <li>{int}        prevPos   which position will return value be spliced into? 0 represents the first argument passed to `fx`</li><li>{int|string} prevKey   instead of splicing return value into args, insert it into existing object/array at `cbPos`</li><li>{int}        cbPos     which position will the callback be spliced into? 0 represents the first argument passed to `fx`</li><li>{int|string} cbKey     instead of splicing callback into args, insert it into existing object/array at `cbPos`</li><li>{array}      defaults  any undefined|null argument is replaced with the default; this can also be used for prev step's return value on the first iteration (i.e. when there is no previous step)</li><li>{int}        errPos   which position will the error callback be spliced into? 0 represents the first argument passed to `fx`</li><li>{int|string} errKey   instead of splicing error callback into args, insert it into existing object/array at `cbPos`</li>
+   <li>{int}        prevPos   which position will return value be spliced into? 0 represents the first
+                              argument passed to `fx`</li>
+   <li>{int|string} prevKey   instead of splicing return value into args, insert it into existing
+                              object/array at `cbPos`</li>
+   <li>{int}        cbPos     which position will the callback be spliced into? 0 represents the first
+                              argument passed to `fx`</li>
+   <li>{int|string} cbKey     instead of splicing callback into args, insert it into existing object/array
+                              at `cbPos`</li>
+   <li>{array}      defaults  any undefined|null argument is replaced with the default; this can also be used for
+                              prev step's return value on the first iteration (i.e. when there is no previous step)</li>
+   <li>{int}        errPos   which position will the error callback be spliced into? 0 represents the first argument passed to `fx`</li>
+   <li>{int|string} errKey   instead of splicing error callback into args, insert it into existing object/array at `cbPos`</li>
 </ul>
 
 Examples:

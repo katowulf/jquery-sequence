@@ -27,12 +27,11 @@
    Sequence.prototype.wait = function(milliseconds) {
       var prev = this.last, def = this.last = $.Deferred();
       prev.then(function() {
+         var args = $.makeArray(arguments); // scope
          setTimeout(function() {
-            console.log('resolved');
-            def.resolve.apply(def, arguments);
+            def.resolve.apply(def, args);
          }, milliseconds);
       }, function() {
-         console.log('rejected', arguments);
          def.reject.apply(def, arguments);
       });
       return this;
@@ -481,7 +480,7 @@
          // set up the resolution so we can store results
          def.always(function() {
             if( !prevDef.isRejected() ) {
-               // store the result for the next step and end() promises
+               // store the result for the next step and end() evaluations
                returnVals.push(_result(arguments));
             }
          });
@@ -578,6 +577,9 @@
             if( !_exists(out[i]) ) {
                out[i] = d[i];
             }
+            else if( typeof(d[i]) === 'object' && typeof(out[i]) === 'object' ) {
+               out[i] = $.extend(true, {}, d[i], out[i]);
+            }
          }
       }
 
@@ -636,6 +638,9 @@
       // if pos was specified or we found a placeholder, drop in our value
       if( i >= 0 ) {
          if( hasPos && hasKey ) {
+            if( !_exists(args[i]) ) {
+               args[i] = typeof(key) === 'string'? {} : [];
+            }
             // we're inserting the value into an existing object/array
             args[i][key] = replacement;
          }
