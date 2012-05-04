@@ -292,10 +292,10 @@ This is essentially the same as calling `new $.Sequence()`, just a little syntac
 
 ### end()
 
-Complete all steps and return a promise which will resolve with all the return values from each step.
-
 > `void end()`
 > @return {[jQuery.Deferred](http://api.jquery.com/category/deferred-object/)} a promise with then/done/fail/always methods
+
+Complete all steps and return a promise which will resolve with all the return values from each step.
 
 After calling this method, no more steps may be added with wrap/handle/run methods. Once all existing steps
 resolve, the promise returned by this method will return all results from all steps in an array.
@@ -323,14 +323,14 @@ in order to retrieve all the results from each step.
 
 ### handle
 
-Call `fx`, which represents any function that invokes a callback on completion. Any number of arguments may be passed to `fx` by simply including them after the function to be executed.
-
 > `Sequence handle( [scope], [opts], fx, [args...] )
 > @param `scope` {Object} set the `this` instance inside of fx
 > @param `opts` {object} a hash containing options for the fx call (see details below)
 > @param `fx` {function} the function to be executed, which must accept a callback
 > @param `args` zero or more arguments passed to `fx` when it is invoked
 > @return {Sequence}
+
+Call `fx`, which represents any function that invokes a callback on completion. Any number of arguments may be passed to `fx` by simply including them after the function to be executed.
 
 This is intended for single uses. To call methods repeatedly, check out register() and run().
 
@@ -448,12 +448,12 @@ Note that, in the case of an array, a new index is spliced into the array (there
 
 ### register
 
-Register a method which may then be executed multiple times by calling `run`
-
 > `Sequence register( fxName, fx, [opts] )
 > @param `fxName` {string} alias for the function that will be used with `run` to call it later
 > @param `fx` {function} the function to be executed whenever `run(fxName)` is invoked
 > @param `opts` {object} a hash containing config properties (see below)
+
+Register a method which may then be executed multiple times by calling `run`
 
 <strong>returns</strong>: Sequence
 
@@ -512,13 +512,13 @@ Examples:
 
 ### run
 
-Run any function added with `register` (see register() for examples and details)
-
 > `Sequence run( [scope], fxName, [args...] )`
 > @param `scope`: {Object} set the `this` instance inside of `fx`
 > @param `fx` {function} the function to be executed whenever `run(fxName)` is invoked
 > @param `args` any number of arguments to pass into `fx` when it is invoked
 > @return {Sequence}
+
+Run any function added with `register` (see register() for examples and details)
 
 
 ### then
@@ -574,13 +574,13 @@ Just like jQuery.Deferred, then() accepts an error handler as well:
 
 ### wait
 
-Wait a specified length before invoking the next step of the sequence (just a good ole fashion sleep() method). 
-
-This does not add any values to the array of results received after end() is called. The result of the previous step is passed on to the next step as if wait() wasn't in the middle.
-
 > `Sequence wait( howlong )`
 > @param `howlong` {int} milliseconds
 > @return {Sequence}
+
+Wait a specified length before invoking the next step of the sequence (just a good ole fashion sleep() method).
+
+This does not add any values to the array of results received after end() is called. The result of the previous step is passed on to the next step as if wait() wasn't in the middle.
 
 ### wrap
 
