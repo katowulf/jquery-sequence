@@ -18,7 +18,7 @@
 
    /**
     * Wait a specified length before invoking the next step of the sequence (just a good ole fashion sleep() method). This
-    * does not add any values to the array of results received after end() is called. The result of the previous step
+    * Does not add any values to the array of results received after end() is called. The result of the previous step
     * is passed on to the next step as if wait() wasn't in the middle.
     *
     * @param {int} milliseconds
@@ -96,7 +96,11 @@
     * Likewise, instead of using Sequence.PREV as a placeholder, we can also splice the return value in, or drop it
     * into an existing argument using the following keys in `opts`.
     *
-    * Finally, the special defaults array can override any undefined arguments passed in.
+    * The special `defaults` array can override any undefined arguments passed in.
+    *
+    * Last but not least, some methods include a success callback and an error callback. The special placeholder
+    * Sequence.ERR can be used to insert an error callback into the arguments. And, of course, it can be specified in
+    * `opts`:
     *
     * All possible keys in the `opts` hash:
     * <ul>
@@ -110,6 +114,8 @@
     *                               at `cbPos`</li>
     *    <li>{array}      defaults  any undefined|null argument is replaced with the default; this can also be used for
     *                               prev step's return value on the first iteration (i.e. when there is no previous step)</li>
+    *    <li>{int}        errPos   which position will the error callback be spliced into? 0 represents the first argument passed to `fx`</li>
+    *    <li>{int|string} errKey   instead of splicing error callback into args, insert it into existing object/array at `cbPos`</li>
     * </ul>
     *
     * Examples:
@@ -147,14 +153,6 @@
     *
     * Note that, in the case of an array, a new index is spliced into the array (there is no placeholder)
     *
-    * Last but not least, some methods include a success callback and an error callback. The special placeholder
-    * Sequence.ERR can be used to insert an error callback into the arguments. And, of course, it can be specified in
-    * `opts`:
-    * <ul>
-    *    <li>{int}        errPos   which position will the error callback be spliced into? 0 represents the first argument passed to `fx`</li>
-    *    <li>{int|string} errKey   instead of splicing error callback into args, insert it into existing object/array at `cbPos`</li>
-    * </ul>
-    *
     * @param {Object}    [scope]  the `this` context for fx, is provided
     * @param {Object}    [opts]   see description
     * @param {Function}  fx       the function to execute, which accepts a callback
@@ -174,7 +172,7 @@
     * @return {Sequence}
     */
    Sequence.prototype.run = function(scope, fxnName) {
-      var args = $.makeArray(arguments), fx;
+      var args = $.makeArray(arguments);
       scope = (typeof(args[0]) === 'object')? args.shift() : null;
       fxnName = args.shift();
       if( !(fxnName in this.fxns) ) { throw new Error('invalid function name "'+fxnName+'" (did you forget to call register?)'); }
@@ -344,7 +342,7 @@
     *         .then(...)                             // 'true'
     *
     *         .then( function() {
-    *             throw new Error('oops');            // this is ignored
+    *             throw new Error('oops');            // this is caught and discarded
     *         })
     *
     *         .wrap( ... )                            // this gets run

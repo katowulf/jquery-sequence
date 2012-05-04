@@ -244,37 +244,339 @@ $.Sequence.start()
 API
 ---
 
-# Placeholders
+## Placeholders
 
-*`Sequence.CB`*
+### `Sequence.CB`
 Represents the position of the callback method. For calls to handle(), if this is not specified, it's assumed to
 be the first argument.
 
-*`Sequence.PREV`*
+### `Sequence.PREV`
 Represents the position to insert return value from previous step. If this is the first step, this will be undefined.
 
-*`Sequence.ERR`*
+### `Sequence.ERR`
 Represents the position for an error callback. For calls to handle(), if this is not specified, then no error callback
 is added.
 
-# Static Utilities
+## Static Utilities
 
 ### Sequence.start()
 
 This is essentially the same as calling `new $.Sequence()`, just a little syntactically cleaner than `(new $.Sequence()).wrap(...)`
 
-# Methods
+## Methods
 
 ### end()
 
-### handle()
+Complete all steps and return a promise which will resolve with all the return values from each step.
 
-### register()
+<strong>@returns</strong>: [jQuery.Deferred](http://api.jquery.com/category/deferred-object/) (a promise)
 
-### run()
+After calling this method, no more steps may be added with wrap/handle/run methods. Once all existing steps
+resolve, the promise returned by this method will return all results from all steps in an array.
 
-### then()
+If the sequence is broken, an array is still returned, containing all results up to the breaking step, with
+the final value as the rejected error value.
 
-### wait()
+Note that the steps of the sequence will complete and resolve without calling this method. It is only necessary
+in order to retrieve all the results from each step.
 
-### wrap()
+```javascript
+   Sequence.start()
+      .wrap(function() { return 'hello'; })
+      .wrap(function() { return 'goodbye'; })
+      .end()
+      .done(...)                    // ["hello", "goodbye"]
+      .fail(function(e) { ... }     // does not get invoked
+      .always(function(v) { ... }   // ["hello", "goodbye"]
+```
+
+
+### handle( [scope], [opts], fx, [args...] )
+
+Call `fx`, which represents any function that invokes a callback on completion. Any number of arguments may be passed to `fx` by simply including them after the function to be executed.
+
+<strong>scope</strong>: {Object} set the `this` instance inside of fx
+<strong>opts</strong>: {object} a hash containing options for the fx call (see details below)
+<strong>fx</strong>: {function} the function to be executed, which must accept a callback
+<strong>args</strong>: zero or more arguments passed to `fx` when it is invoked
+
+<strong>returns</strong>: Sequence
+
+This is intended for single uses. To call methods repeatedly, check out register() and run().
+
+The special constant Sequence.CB is used to specify where in the arguments the callback should appear. If it is not found, then the callback is placed first. Examples:
+
+```javascript
+   Sequence.start()
+      .handle( fx );                    // fx( callback )
+      .handle( fx, Sequence.CB, 'a', 'b' ) // fx( callback, 'a', 'b' )
+      .handle( fx, 'a', 'b' )           // fx( 'a', 'b', callback )
+      .handle( fx, 'a', Sequence.CB, 'b' ) // fx( 'a', callback, 'b' )
+```
+
+If `scope` is provided, then inside fx, `this` will refer to scope.
+
+```javascript
+   function Color(c) { this.color = c; }
+   var col   = new Color('red');
+   var sequence = new Sequence();
+
+   Sequence.start().handle(col, function(callback) {
+      callback(this.color); // 'red'
+   });
+```
+
+The return value of any previous step in the sequence can be accessed using the placeholder Sequence.PREV, which behaves
+much like Sequence.CB. Unlike Sequence.CB, it must exist and there is no default behavior if it is not included.
+
+Examples:
+
+```javascript
+   // a simple callback structure
+   function add(callback, base, amt) {
+      setTimeout( function() { callback( base + amt ); }, 100 );
+   }
+
+   // something with a little more configuration
+   function subtract(amt, from, callback) {
+      setTimeout( function() { callback( from - amt ); }, 200 );
+   }
+
+   (new Sequence())
+      .handle( add, 0, 1 );                        // 1
+      .handle( add, Sequence.PREV, 1 )                // 2
+      .handle( add, Sequence.PREV, 3 )                // 5
+      .handle( subtract, 1, Sequence.PREV, Sequence.CB ) // 4
+      .handle( subtract, 3, Sequence.PREV, Sequence.CB ) // 1
+      .end()
+      .done(...);                                  // [1, 2, 5, 4, 1]
+```
+
+Instead of using Sequence.CB as a placeholder, we can also splice the callback in, or drop it into an
+existing argument using the following keys in `opts`.
+
+Likewise, instead of using Sequence.PREV as a placeholder, we can also splice the return value in, or drop it
+into an existing argument using the following keys in `opts`.
+
+The special `defaults` array can override any undefined arguments passed in.
+
+Last but not least, some methods include a success callback and an error callback. The special placeholder
+Sequence.ERR can be used to insert an error callback into the arguments. And, of course, it can be specified in
+`opts`:
+
+All possible keys in the `opts` hash:
+<ul>
+   <li>{int}        prevPos   which position will return value be spliced into? 0 represents the first
+                              argument passed to `fx`</li>
+   <li>{int|string} prevKey   instead of splicing return value into args, insert it into existing
+                              object/array at `cbPos`</li>
+   <li>{int}        cbPos     which position will the callback be spliced into? 0 represents the first
+                              argument passed to `fx`</li>
+   <li>{int|string} cbKey     instead of splicing callback into args, insert it into existing object/array
+                              at `cbPos`</li>
+   <li>{array}      defaults  any undefined|null argument is replaced with the default; this can also be used for
+                              prev step's return value on the first iteration (i.e. when there is no previous step)</li>
+   <li>{int}        errPos   which position will the error callback be spliced into? 0 represents the first argument passed to `fx`</li>
+   <li>{int|string} errKey   instead of splicing error callback into args, insert it into existing object/array at `cbPos`</li>
+</ul>
+
+Examples:
+
+```javascript
+   function goToDisneyland( numberOfPeople, date, callback ) {
+      var cost = 20.00;
+      var dateString = date.toString('MM/dd/YYYY');
+      callback( "Taking "+numberOfPeople+" to Disneyland on "+dateString+" will cost $"+(numberOfPeople*cost) );
+   }
+
+   function goHome( opts ) {
+      opts.callback( opts.message );
+   }
+
+   function goToStore( callback, opts ) {
+      callback( opts[0] + opts[1] );
+   }
+
+   // splice callback and return value into arguments via the `opts` config parms
+   Sequence.start()
+      .wrap(function() { return new Date(2999, 01, 01) }) // get a return value to use in our example
+      .handle( {cbPos: 2, prevPos: 1}, goToDisneyland, 10 )
+      .end().done( alert ); // alerts: "Taking 10 people to Disneyland on 01/01/2999 will cost $200"
+
+   // put callback into an existing object
+   Sequence.start().handle( {cbPos: 0, cbKey: callback}, goHome, {message: 'I am tired'} )
+        .then(...); // 'I am tired'
+
+   // put return value into an existing array
+   Sequence.start()
+        .wrap( function() {return '$20.00'} )
+        .handle( {prevPos: 1, prevKey: 1}, goToStore, ['I have '] )
+        .then(...); // 'I have $20.00'
+```
+
+Note that, in the case of an array, a new index is spliced into the array (there is no placeholder)
+
+### register( fxName, fx, [opts] )
+
+Register a method which may then be executed multiple times by calling `run`
+
+<strong>fxName</strong>: {string} alias for the function that will be used with `run` to call it later
+<strong>fx</strong>: {function} the function to be executed whenever `run(fxName)` is invoked
+<strong>opts</strong>: {object} a hash containing config properties (see below)
+
+<strong>returns</strong>: Sequence
+
+The `opts` hash may contain any of the following:
+   - {int}        cbPos     if specified, a callback is spliced into the arguments at this position
+   - {string|int} cbKey     if specified, this alters the behavior of `cbPos`;
+                            the callback is added into an object/array instead of spliced into args
+   - {int}        prevPos   if specified, the return value of previous function in sequence is spliced into args at this position
+   - {string|int} prevKey   if specified, this alters the behavior of `prevPos`;
+                            the return value is added into an object/array instead of spliced into args
+   - {int}        errPos    if specified, an error callback is spliced into args at this position
+   - {string|int} errKey    if specified, inserts error callback into object/array at errPos instead of splicing it
+   - {array}      defaults  any undefined|null argument is replaced with the default; this can also be used for
+                            prev step's return value on the first iteration (i.e. when there is no previous step)
+
+If cbPos is not specified, then run() will behave just like the wrap() method (using the return value). Otherwise,
+run() will behave like the handle() method (expecting a callback to be invoked).
+
+The `errPos` and `errKey` options are only utilized if cbPos exists (we must declare a success callback if a
+callback is to be used, otherwise, only the return value is evaluated).
+
+If an Error is thrown or the return value is an instance of Error, then the chain is broken immediately and error
+handlers are notified.
+
+Examples:
+
+```javascript
+  function TestScope() {
+     this.multiply = function(callback, a, b) {
+        setTimeout( function() { callback( a * b ); }, 100 );
+     }
+  }
+  var testScope = new TestScope();
+
+  Sequence.start()
+     // register some functions
+     .register( 'add', function(a, b) { return a + b; }, { defaults: [ 0, 1 ], prevPos: 0 } )
+     .register( 'sum',
+        function(callback, a, b) { return this.multiply(callback, a, b); },
+        { cbPos: 0, prevPos: 2 } )
+
+     // now run them a bunch
+     .run('add')               // 1  ( default=0,     default=1 )
+     .run('add', 3)            // 4  ( returnValue=1, arg=3 )
+     .run('add')               // 5  ( returnValue=4, default=1 )
+
+     .run(testScope, 'sum', 5) // 25 ( returnValue=5, arg=5 )
+     .end()
+     .done(function(v) { console.log('done', v); })
+     .fail(function(e) { console.error('fail() should not run', e); })
+     .always(function(v) {
+        console.log('always', v);
+        next();
+     });
+```
+
+### run( [scope], fxName, [args...] )
+
+Run any function added with `register` (see register() for examples and details)
+
+<strong>scope</strong>: {Object} set the `this` instance inside of `fx`
+<strong>fx</strong>: {function} the function to be executed whenever `run(fxName)` is invoked
+<strong>args</strong>: any number of arguments to pass into `fx` when it is invoked
+
+<strong>returns</strong>: Sequence
+
+
+### then( fx [, errorFxn] )
+
+Get the results of the previous step from sequence (once it resolves) and do something with it outside of the sequence.
+    
+<strong>fx</strong>: {function} the function to invoke when previous step completes
+<strong>errorFxn</strong>: {function} called if the previous step fails with error condition
+
+<strong>returns</strong>: Sequence
+
+Get the results of the previous step from sequence (once it resolves) and do something with it outside of the
+sequence.
+
+This is a method of obtaining a single result from the sequence rather than waiting for the entire sequence to
+complete. This call is not part of the sequence and the return value is ignored. Async calls within these functions
+do not delay execution of the next step.
+
+Exceptions thrown by `fx` are caught, since they would prevent end/done/fail/always from being invoked.
+However, they are discarded silently, so do not attempt to use then() to do anything that should break the
+sequence if it fails.
+
+Examples:
+
+```javascript
+   Sequence.start()
+        .wrap( function() { return true; } )
+        .then(...)                             // 'true'
+        .then( function() { return false; } )  // return value is ignored
+        .then(...)                             // 'true'
+
+        .then( function() {
+            throw new Error('oops');            // this is caught and discarded
+        })
+
+        .wrap( ... )                            // this gets run
+        .handle( ... )                          // this gets run
+        .done( ... )                            // this gets run
+
+        .fail( ... );                           // this does not get invoked
+```
+
+Just like jQuery.Deferred, then() accepts an error handler as well:
+
+```javascript
+   function resolve() { alert('success'); }
+   function reject()  { alert('failed'); }
+
+   Sequence.start()
+        .wrap( function() { return true; })
+        .then( resolve, reject ) // 'success'
+
+        .wrap( function() { throw new Error('oops'); })
+        .then( resolve, reject ); // 'failed'
+
+        // final results
+        .done( ... ) // 'true'
+        .fail( ... ) // never called!
+```
+
+### wait( howlong )
+
+Wait a specified length before invoking the next step of the sequence (just a good ole fashion sleep() method). 
+
+This does not add any values to the array of results received after end() is called. The result of the previous step is passed on to the next step as if wait() wasn't in the middle.
+
+<strong>howlong</strong>: {int} milliseconds
+
+<strong>returns</strong>: Sequence
+
+```javascript
+   //todo
+```
+
+### wrap( [scope], [opts], fx, [args...] )
+
+Execute a function which invokes may return a value to be passed along the chain. If the return
+value is a [jQuery.Deferred promise](http://api.jquery.com/category/deferred-object/), then the
+Sequence will wait for it to resolve before continuing.
+
+If `fx` throws or returns an error, then the chain is broken and we skip ahead to the end() condition.
+
+<strong>scope</strong>: {Object} set the `this` instance inside of fx
+<strong>opts</strong>: {object} a hash containing options for the fx call (see description above)
+<strong>fx</strong>: {function} the function to be executed, which may return a value
+<strong>args</strong>: zero or more arguments passed to `fx` when it is invoked
+
+<strong>returns</strong>: Sequence
+
+```javascript
+   //todo
+```
