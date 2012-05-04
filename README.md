@@ -7,6 +7,31 @@ remove the callback nesting craziness.
 We can handle any sort of callback structure (callback is first, last, or even inside a hash like jQuery.fn.animate).
 We can also read in results of previous step anywhere into the next method's arguments.
 
+*   [Install](#install)
+*   [Basics](#basics)
+*   [Error Handling](#error-handling)
+*   [Advanced](#advanced)
+    *   [Position the callback](#position-the-callback)
+    *   [Nested callbacks](#nested-callbacks)
+    *   [Declaring the scope](#declaring-the-scope)
+    *   [Register/Run](#registerrun-register-once-run-a-bunch)
+    *   [Error callbacks](#error-callbacks)
+*   [API](#api)
+    *   [Placeholders](#placeholders)
+        *   [Sequence.CB](#sequencecb)
+        *   [Sequence.PREV](#sequenceprev)
+        *   [Sequence.ERR](#sequenceerr)
+    *   [Static Utilities](#static-utilities)
+        *   [Sequence.start()] (#sequencestart)
+    *   [Methods](#methods)
+        *   [end()](#iend)
+        *   [handle()](#handle)
+        *   [register()](#register)
+        *   [then()](#then)
+        *   [wait()](#wait)
+        *   [wrap()](#wrap)
+*   [License](#license)
+
 Install
 -------
 
@@ -580,3 +605,14 @@ If `fx` throws or returns an error, then the chain is broken and we skip ahead t
 ```javascript
    //todo
 ```
+
+License
+-------
+License
+(The MIT License)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
