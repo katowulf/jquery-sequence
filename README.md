@@ -7,9 +7,7 @@ remove the callback nesting craziness.
 We can handle any sort of callback structure (callback is first, last, or even inside a hash like jQuery.fn.animate).
 We can also read in results of previous step anywhere into the next method's arguments.
 
-*   [Install](#install)
-*   [Basics](#basics)
-*   [Error Handling](#error-handling)
+*   [Install](#install) *   [Basics](#basics) *   [Error Handling](#error-handling)
 *   [Advanced](#advanced)
     *   [Position the callback](#position-the-callback)
     *   [Nested callbacks](#nested-callbacks)
@@ -292,7 +290,7 @@ This is essentially the same as calling `new $.Sequence()`, just a little syntac
 
 ### end()
 
-> `void end()`
+> `void end()`<br />
 > @return {[jQuery.Deferred](http://api.jquery.com/category/deferred-object/)} a promise with then/done/fail/always methods
 
 Complete all steps and return a promise which will resolve with all the return values from each step.
@@ -396,18 +394,7 @@ Sequence.ERR can be used to insert an error callback into the arguments. And, of
 
 All possible keys in the `opts` hash:
 <ul>
-   <li>{int}        prevPos   which position will return value be spliced into? 0 represents the first
-                              argument passed to `fx`</li>
-   <li>{int|string} prevKey   instead of splicing return value into args, insert it into existing
-                              object/array at `cbPos`</li>
-   <li>{int}        cbPos     which position will the callback be spliced into? 0 represents the first
-                              argument passed to `fx`</li>
-   <li>{int|string} cbKey     instead of splicing callback into args, insert it into existing object/array
-                              at `cbPos`</li>
-   <li>{array}      defaults  any undefined|null argument is replaced with the default; this can also be used for
-                              prev step's return value on the first iteration (i.e. when there is no previous step)</li>
-   <li>{int}        errPos   which position will the error callback be spliced into? 0 represents the first argument passed to `fx`</li>
-   <li>{int|string} errKey   instead of splicing error callback into args, insert it into existing object/array at `cbPos`</li>
+   <li>{int}        prevPos   which position will return value be spliced into? 0 represents the first argument passed to `fx`</li><li>{int|string} prevKey   instead of splicing return value into args, insert it into existing object/array at `cbPos`</li><li>{int}        cbPos     which position will the callback be spliced into? 0 represents the first argument passed to `fx`</li><li>{int|string} cbKey     instead of splicing callback into args, insert it into existing object/array at `cbPos`</li><li>{array}      defaults  any undefined|null argument is replaced with the default; this can also be used for prev step's return value on the first iteration (i.e. when there is no previous step)</li><li>{int}        errPos   which position will the error callback be spliced into? 0 represents the first argument passed to `fx`</li><li>{int|string} errKey   instead of splicing error callback into args, insert it into existing object/array at `cbPos`</li>
 </ul>
 
 Examples:
@@ -448,7 +435,7 @@ Note that, in the case of an array, a new index is spliced into the array (there
 
 ### register()
 
-> `Sequence register( fxName, fx, [opts] )<br />
+> `Sequence register( fxName, fx, [opts] )`<br />
 > @param `fxName` {string} alias for the function that will be used with `run` to call it later<br />
 > @param `fx` {function} the function to be executed whenever `run(fxName)` is invoked<br />
 > @param `opts` {object} a hash containing config properties (see below)<br />
