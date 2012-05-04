@@ -24,7 +24,7 @@ We can also read in results of previous step anywhere into the next method's arg
     *   [Static Utilities](#static-utilities)
         *   [Sequence.start()] (#sequencestart)
     *   [Methods](#methods)
-        *   [end()](#iend)
+        *   [end()](#end)
         *   [handle()](#handle)
         *   [register()](#register)
         *   [then()](#then)
@@ -294,7 +294,8 @@ This is essentially the same as calling `new $.Sequence()`, just a little syntac
 
 Complete all steps and return a promise which will resolve with all the return values from each step.
 
-<strong>@returns</strong>: [jQuery.Deferred](http://api.jquery.com/category/deferred-object/) (a promise)
+> `void end()`
+> @return {[jQuery.Deferred](http://api.jquery.com/category/deferred-object/)} a promise with then/done/fail/always methods
 
 After calling this method, no more steps may be added with wrap/handle/run methods. Once all existing steps
 resolve, the promise returned by this method will return all results from all steps in an array.
@@ -310,22 +311,26 @@ in order to retrieve all the results from each step.
       .wrap(function() { return 'hello'; })
       .wrap(function() { return 'goodbye'; })
       .end()
+      .then(
+         function() {...},          // ["hello", "goodbye"]
+         function() {...}           // does not get invoked (no error condition)
+      )
       .done(...)                    // ["hello", "goodbye"]
-      .fail(function(e) { ... }     // does not get invoked
+      .fail(function(e) { ... }     // does not get invoked (no error condition)
       .always(function(v) { ... }   // ["hello", "goodbye"]
 ```
 
 
-### handle( [scope], [opts], fx, [args...] )
+### handle
 
 Call `fx`, which represents any function that invokes a callback on completion. Any number of arguments may be passed to `fx` by simply including them after the function to be executed.
 
-<strong>scope</strong>: {Object} set the `this` instance inside of fx
-<strong>opts</strong>: {object} a hash containing options for the fx call (see details below)
-<strong>fx</strong>: {function} the function to be executed, which must accept a callback
-<strong>args</strong>: zero or more arguments passed to `fx` when it is invoked
-
-<strong>returns</strong>: Sequence
+> `Sequence handle( [scope], [opts], fx, [args...] )
+> @param `scope` {Object} set the `this` instance inside of fx
+> @param `opts` {object} a hash containing options for the fx call (see details below)
+> @param `fx` {function} the function to be executed, which must accept a callback
+> @param `args` zero or more arguments passed to `fx` when it is invoked
+> @return {Sequence}
 
 This is intended for single uses. To call methods repeatedly, check out register() and run().
 
@@ -441,13 +446,14 @@ Examples:
 
 Note that, in the case of an array, a new index is spliced into the array (there is no placeholder)
 
-### register( fxName, fx, [opts] )
+### register
 
 Register a method which may then be executed multiple times by calling `run`
 
-<strong>fxName</strong>: {string} alias for the function that will be used with `run` to call it later
-<strong>fx</strong>: {function} the function to be executed whenever `run(fxName)` is invoked
-<strong>opts</strong>: {object} a hash containing config properties (see below)
+> `Sequence register( fxName, fx, [opts] )
+> @param `fxName` {string} alias for the function that will be used with `run` to call it later
+> @param `fx` {function} the function to be executed whenever `run(fxName)` is invoked
+> @param `opts` {object} a hash containing config properties (see below)
 
 <strong>returns</strong>: Sequence
 
@@ -504,36 +510,29 @@ Examples:
      });
 ```
 
-### run( [scope], fxName, [args...] )
+### run
 
 Run any function added with `register` (see register() for examples and details)
 
-<strong>scope</strong>: {Object} set the `this` instance inside of `fx`
-<strong>fx</strong>: {function} the function to be executed whenever `run(fxName)` is invoked
-<strong>args</strong>: any number of arguments to pass into `fx` when it is invoked
+> `Sequence run( [scope], fxName, [args...] )`
+> @param `scope`: {Object} set the `this` instance inside of `fx`
+> @param `fx` {function} the function to be executed whenever `run(fxName)` is invoked
+> @param `args` any number of arguments to pass into `fx` when it is invoked
+> @return {Sequence}
 
-<strong>returns</strong>: Sequence
 
+### then
 
-### then( fx [, errorFxn] )
+> `Sequence then( fx [, errorFxn] )
+> @param `fx` {function} the function to invoke when previous step completes
+> @param `errorFxn` {function} called if the previous step fails with error condition
+> @return {Sequence}
 
 Get the results of the previous step from sequence (once it resolves) and do something with it outside of the sequence.
-    
-<strong>fx</strong>: {function} the function to invoke when previous step completes
-<strong>errorFxn</strong>: {function} called if the previous step fails with error condition
 
-<strong>returns</strong>: Sequence
+This is a method of obtaining a single result from the sequence rather than waiting for the entire sequence to complete. This call is not part of the sequence and the return value is ignored. Async calls within these functions do not delay execution of the next step.
 
-Get the results of the previous step from sequence (once it resolves) and do something with it outside of the
-sequence.
-
-This is a method of obtaining a single result from the sequence rather than waiting for the entire sequence to
-complete. This call is not part of the sequence and the return value is ignored. Async calls within these functions
-do not delay execution of the next step.
-
-Exceptions thrown by `fx` are caught, since they would prevent end/done/fail/always from being invoked.
-However, they are discarded silently, so do not attempt to use then() to do anything that should break the
-sequence if it fails.
+Exceptions thrown by `fx` are caught, since they would prevent end/done/fail/always from being invoked. However, they are discarded silently, so do not attempt to use then() to do anything that should break the sequence if it fails.
 
 Examples:
 
@@ -573,37 +572,83 @@ Just like jQuery.Deferred, then() accepts an error handler as well:
         .fail( ... ) // never called!
 ```
 
-### wait( howlong )
+### wait
 
 Wait a specified length before invoking the next step of the sequence (just a good ole fashion sleep() method). 
 
 This does not add any values to the array of results received after end() is called. The result of the previous step is passed on to the next step as if wait() wasn't in the middle.
 
-<strong>howlong</strong>: {int} milliseconds
+> `Sequence wait( howlong )`
+> @param `howlong` {int} milliseconds
+> @return {Sequence}
 
-<strong>returns</strong>: Sequence
+### wrap
+
+> `Sequence wrap( [scope], [opts], fx, [args...] )`
+> @param `scope` {Object} set the `this` instance inside of fx
+> @param `opts` {object} a hash containing options for the fx call (see description above)
+> @param `fx` {function} the function to be executed, which may return a value
+> @param `args` zero or more arguments passed to `fx` when it is invoked
+> @return {Sequence}
+
+Wrap `fx`, which returns a value instead of invoking a callback, and continue the sequence. Any number of arguments
+may be passed after `fx`, which are passed to the method when it is invoked.
+
+If `fk` returns a jQuery.Deferred.promise() object, then it will be resolved before the sequence continues. Any other
+value is treated as already resolved and we continue immediately. If `fx` throws or returns an error, then
+the chain is broken (fail() listeners are called, done() listeners are never notified)
+
+The return value of any previous step in the sequence can be accessed using the placeholder Sequence.PREV.
+
+Examples:
 
 ```javascript
-   //todo
+   // returns a + b for fun and profit
+   function add(a, b) {
+      return a+b;
+   }
+
+   // returns a promise object that will add a + b at some time in the future
+   function promise(a, b) {
+      var def = $.Deferred();
+      setTimeout(function() {
+         def.resolve(a + b); // but gets added later
+      }, 500);
+      return def.promise(); // returns immediately
+   }
+
+   (new Sequence())
+      .wrap( add, 0, 1 );             // 1
+      .wrap( add, Sequence.PREV, 1 )     // 2
+      .wrap( add, Sequence.PREV, 3 )     // 5
+      .wrap( promise, Sequence.PREV, 1 ) // 6
+      .wrap( promise, Sequence.PREV, 2 ) // 8
+      .end()
+      .done(...);                     // [1, 2, 5, 6, 8]
 ```
 
-### wrap( [scope], [opts], fx, [args...] )
+Instead of using Sequence.PREV as a placeholder, we can also splice the return value in, or drop it into
+an existing argument using the following keys in `opts`:
+<ul>
+   <li>{int}        prevPos   which position will return value be spliced into?
+                              0 represents the first argument passed to `fx`</li>
+   <li>{int|string} prevKey   instead of splicing return value into args,
+                              insert it into existing object/array at `cbPos`</li>
+</ul>
 
-Execute a function which invokes may return a value to be passed along the chain. If the return
-value is a [jQuery.Deferred promise](http://api.jquery.com/category/deferred-object/), then the
-Sequence will wait for it to resolve before continuing.
-
-If `fx` throws or returns an error, then the chain is broken and we skip ahead to the end() condition.
-
-<strong>scope</strong>: {Object} set the `this` instance inside of fx
-<strong>opts</strong>: {object} a hash containing options for the fx call (see description above)
-<strong>fx</strong>: {function} the function to be executed, which may return a value
-<strong>args</strong>: zero or more arguments passed to `fx` when it is invoked
-
-<strong>returns</strong>: Sequence
+Examples:
 
 ```javascript
-   //todo
+   function goToDisneyland( numberOfPeople, date ) {
+      var cost = 20.00;
+      return "Taking "+numberOfPeople+" to Disneyland on "+date+" will cost $"+(numberOfPeople*cost);
+   }
+
+   // splice callback and return value into arguments via the `opts` config parms
+   Sequence.start()
+      .wrap(function() { return '01/01/2999' }) // a date to pass to the next step
+      .wrap( {prevPos: 1}, goToDisneyland, 10 ) // inserts prev steps result at pos 1 (after 10)
+      .then(...);                               // "Taking 10 people to Disneyland on 01/01/2999 will cost $200"
 ```
 
 License
