@@ -52,11 +52,23 @@
     *
     * @static
     * @param {object} [fxns] if a hash is provided, then each entry is passed to `register` (see above)
+    * @param {int}    [timeout] abort the sequence if timeout is reached
     * @return {Sequence}
     */
-   Sequence.start = function(fxns) {
-      var seq = new Sequence();
-      fxns && _registerAll(seq, fxns);
+   Sequence.start = function(fxns, timeout) {
+      var seq = new Sequence(), parms = _startParms($.makeArray(arguments));
+      fxns && _registerAll(seq, parms.fxns);
+
+      if( parms.timeout ) {
+         var timeoutRef = setTimeout(function() {
+            seq.abort('timeout exceeded');
+            timeoutRef = null;
+         }, parms.timeout);
+
+         seq.master.always(function() {
+            if( timeoutRef ) { clearTimeout(timeoutRef); timeoutRef = null; }
+         });
+      }
       return seq;
    };
 
@@ -690,12 +702,12 @@
     * @return {jQuery.Deferred} a promise, see http://api.jquery.com/category/deferred-object/
     */
    Sequence.prototype.end = function(throwErrors) {
-      var results = this.returnVals, master = this.master;
+      var results = this.returnVals, master = this.master, shared = this.shared;
       // when the last method fulfills the promise, it will automatically drop its result into this.returnVals
       // so there is no need to evaluate passed to then() callbacks here
       this.last.then(function() {
          // success returns the results
-         master.resolve(results);
+         _resolve(master, shared, [results]);
       }, function() {
          if( throwErrors ) {
             // mostly for debugging and test cases; not likely to be useful for client-facing code
@@ -763,6 +775,7 @@
       if( this.shared.pauseEvent ) {
          this.shared.pauseEvent.reject(e);
       }
+      this.last.reject(e);
       return this;
    };
 
@@ -1359,6 +1372,23 @@
       var rest = array.slice((to || from) + 1 || array.length);
       array.length = from < 0 ? array.length + from : from;
       return array.push.apply(array, rest);
+   }
+
+   function _startParms(args) {
+      var out = { fxns: false, timeout: false }, i = args.length;
+      while(i--) {
+         switch(typeof(args[i])) {
+            case 'number':
+               out.timeout = args[i];
+               break;
+            case 'object':
+               out.fxns = args[i];
+               break;
+            default:
+               throw new Error('Invalid argument to $.Sequence.start() of type '+typeof(args[i]));
+         }
+      }
+      return out;
    }
 
 })(jQuery);

@@ -26,18 +26,21 @@ jQuery(function($) {
 
       // call start vanilla
       seq = S.start();
-      ok(seq instanceof S, 'Should be instance of S');
+      ok(seq instanceof S, 'Should be instance of $.Sequence');
 
       // call start and register some functions
       seq = S.start({ callA: function(){return 'A';}, callB: {fx: function(){return 'B';}} });
 
+      console.log(seq);
+
       // make sure the functions were registered
-      equal(Object.keys(seq.fxns).length, 2, 'S.start() should register 2 functions');
+      // since wait() is automagically registered, count is +1
+      equal(Object.keys(seq.fxns).length, 3, 'S.start() should register 2 functions');
       seq.callA()
-            .callB()
-            .end()
-            .done(shouldCall)
-            .fail(shouldNotCall); // should run without any errors
+         .callB()
+         .end()
+         .done(shouldCall)
+         .fail(shouldNotCall); // should run without any errors
    });
 
    /******************************************
