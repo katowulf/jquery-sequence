@@ -9,10 +9,11 @@
       this.shared     = { pauseEvent: false, abortEvent: false, lastIf: undef };
 
       // make wait() available via run() and if() methods
-      this.fxns.wait  = _wrapFx(this.shared, function(milliseconds, prevStep) {
+      var shared = this.shared;
+      this.fxns.wait  = _wrapFx(shared, function(milliseconds, prevStep) {
          var def = $.Deferred();
          _waitFor(milliseconds).then(function() {
-            def.resolve(prevStep);
+            _resolve(def, shared, [prevStep]);
          });
          return def;
       }, {prevPos: 1});
@@ -729,8 +730,9 @@
     * Pause the sequence after the currently running step and do not invoke any more steps
     * until unpause() is called.
     *
-    * It's important to note that if the current step fails, the entire chain will still be rejected and
-    * done()/fail() events may be fired (i.e. this pause() event will never be reached and not take hold).
+    * This does not stop the currently running step from completing. Additionally, if the current step fails,
+    * the entire chain will still be rejected and done()/fail() events may be fired (i.e. this pause() event
+    * will never be overidden).
     *
     * @return {Sequence}
     */
@@ -883,36 +885,38 @@
     * @private
     */
    function _ex(returnVals, masterDef, prevDef, wrappedFx, scope, args, shared) {
-      var def = $.Deferred();
+      var def = $.Deferred(), pauseEvent = shared.pauseEvent || $.Deferred().resolve();
       if( masterDef.isResolved() || masterDef.isRejected() ) {
-         throw new Error('Cannot execute additional steps on a sequence after end() has been called :(');
+         return masterDef.promise();
       }
 
-      if( prevDef.isRejected() ) {
-         // if the chain is already broken, don't add any more steps
-         def = prevDef;
-      }
-      else if( shared.abortEvent ) {
+      if( shared.abortEvent ) {
          // an abort has been called but not yet triggered; stop the show
          def.reject(shared.abortEvent);
       }
-      else if( shared.pauseEvent ) {
-         // just wait around for the pause to end and then call _ex again :)
-         _ex(returnVals, masterDef, prevDef, wrappedFx, scope, args, shared).then(function() {
-            _resolve(def, shared, $.makeArray(arguments));
-         }, function() {
-            def.reject.apply(def, $.makeArray(arguments));
-         })
-      }
       else {
-         // wait for prev function to complete before executing
-         prevDef.then(function() {
-            // when prev resolves, we execute this step
-            wrappedFx(def, scope, args, _result(arguments));
-         }, function() {
-            // if the previous step rejects, then this one does not get run
-            // we break the chain here, reject this step, and do not store a result (the error is the last one stored)
-            def.reject.apply(def, arguments);
+         // if a pause event is in play, then we need to wait for it to complete
+         // but we don't want to get mixed up on our return values, or accidentally start
+         // the next step before the previous one fulfills (if we pause/unpause before it is done)
+         // so wait for its promise to resolve and THEN wait for the prevDef to resolve too
+         // (using that one for return values)
+         pauseEvent.then(function() {
+            if( prevDef.isRejected() ) {
+               // if the chain is already broken, don't add any more steps
+               // recast the def here just in case this was not asynchronous
+               def = prevDef;
+            }
+            else {
+               // wait for prev function to complete before executing
+               prevDef.then(function() {
+                  // when prev resolves, we execute this step
+                  wrappedFx(def, scope, args, _result(arguments));
+               }, function() {
+                  // if the previous step rejects, then this one does not get run
+                  // we break the chain here, reject this step, and do not store a result (the error is the last one stored)
+                  def.reject.apply(def, arguments);
+               });
+            }
          });
 
          // set up the resolution so we can store results
@@ -1155,10 +1159,9 @@
 
       // invoke the wrapped function, which handles try/catch, callbacks, and promises for us
       if( parms.opts.wait > 0 ) {
-         setTimeout(function() {
-            //todo this may execute ahead of time in Firefox
+         _waitFor(parms.opts.wait).then(function() {
             parms.fx(def, parms.scope, parms.args, prevValue);
-         }, parms.opts.wait);
+         });
       }
       else {
          parms.fx(def, parms.scope, parms.args, prevValue);
@@ -1347,18 +1350,18 @@
    })(); // end of Placeholder class
 
    function _waitFor(milliseconds) {
-      var start = new Date().getTime(), def = $.Deferred();
+      var start = new Date().valueOf(), def = $.Deferred();
       setTimeout(function() {
-         var diff = new Date().getTime() - start;
+         var diff = new Date().valueOf() - start;
          if( diff < milliseconds ) {
             // setTimeout() is completely unreliable in Firefox and can actually return BEFORE the timeout
             // specified (curse you Mozilla baby!), so if our wait doesn't meet the minimum, then wait some more
             var interval = setInterval(function() {
-               if( new Date().getTime() - start >= milliseconds ) {
+               if( new Date().valueOf() - start >= milliseconds ) {
                   clearInterval(interval);
                   def.resolve(true);
                }
-            }, diff)
+            }, Math.max(diff, 10));
          }
          else {
             // other browsers don't have this issue

@@ -31,8 +31,6 @@ jQuery(function($) {
       // call start and register some functions
       seq = S.start({ callA: function(){return 'A';}, callB: {fx: function(){return 'B';}} });
 
-      console.log(seq);
-
       // make sure the functions were registered
       // since wait() is automagically registered, count is +1
       equal(Object.keys(seq.fxns).length, 3, 'S.start() should register 2 functions');
@@ -517,8 +515,8 @@ jQuery(function($) {
             .always(start);
    });
 
-   test('if', function() {
-      expect(8);
+   asyncTest('if', function() {
+      expect(7);
 
       // execute a callback to prove it was run
       function invokeCallback(cbFx, val) {
@@ -558,62 +556,126 @@ jQuery(function($) {
 
             .end(true);
 
-      stop();
       S.start()
          // using a promise as the if condition
-            .if( promiseCondition, shouldCall, 'promise' ) // runs only if promise resolves successfully
+            .if( promiseCondition, function(v) { return v; }, 'promise' ) // runs only if promise resolves successfully
             .then(thenFx('promise'))
             .end(true)
             .always(start);
 
    });
 
-   test('pause', function() {
-      ok(false, 'Implement me');
+   asyncTest('pause/unpause', function() {
+      expect(4);
+      var wait = 75, now = new Date().valueOf(), timeout;
+
+      // start a sequence and pause it
+      var seq = S.start(1000).wrap(deferFx, true);
+      seq.pause();
+
+      // trigger an unpause some time in the future
+      // use .wait() so we are sure it's the right length (setTimeout is unreliable)
+      S.start().wait(wait).then(function() {
+         seq.unpause();
+      }).end(true);
+
+      // make sure it waited before fulfilling promises
+      seq
+         .wrap(function() {
+            var diff = new Date().valueOf() - now;
+            ok( diff >= wait, 'waited at least '+wait+' milliseconds ('+diff+')' );
+            return 'hi';
+         })
+         .end()
+         .done(function(v) {
+            strictEqual(v[0], true, 'done ran after then and returned proper value');
+            strictEqual(v[1], 'hi', 'done ran after then and returned proper value');
+            var diff = new Date().valueOf() - now;
+            ok( diff >= wait, 'waited at least '+wait+' milliseconds ('+diff+')' );
+         })
+         .always(function() {
+            start();
+         });
    });
 
-   test('unpause', function() {
-      ok(false, 'Implement me');
+   asyncTest('abort', function() {
+      expect(2);
+      var seq = S.start(1000), i, counter = 0;
+      for(i=0; i < 5; i++) {
+         seq.then(function() { counter++; }).wrap(deferFx);
+      }
+      seq.abort('yay');
+      seq.end()
+         .done(shouldNotCall)
+         .fail(function(e) {
+            equal(counter, 1, 'fail called and only one method ran');
+            equal(e.message, 'yay', 'failed with error and correct message');
+         })
+         .always(start);
    });
 
-   test('abort', function() {
-      ok(false, 'Implement me');
+   asyncTest('abort while paused', function() {
+      expect(2);
+      var seq = S.start(1000);
+      seq
+         .wrap(function() { return 1; })
+         .pause()
+         .wrap(function() { return 2; })
+         .then(shouldNotCall, shouldCall)
+         .end()
+         .done(shouldNotCall)
+         .fail(shouldCall)
+         .always(function(vals) {
+            start();
+         });
+      seq.abort('break it')
+   });
+
+   asyncTest('Sequence.start() with timeout', function() {
+      expect(1);
+      var seq = S.start(100), timeout;
+
+      timeout = setTimeout(function() {
+         timeout = false;
+         seq.abort('manually ended, timeout did not fire');
+         start();
+      }, 1000);
+
+      seq.wrap(function() {
+            return $.Deferred().promise(); // never resolves
+         })
+         .end()
+         .done(shouldNotCall)
+         .fail(function(e) {
+            ok(true, 'timed out with message "'+ e.message+'"');
+         })
+         .always(function() {
+            if( timeout ) { clearTimeout(timeout); }
+            start();
+         });
    });
 
 
    asyncTest('wait', function() {
       expect(11);
 
-      function _waits() {
-         var def = $.Deferred(), seq = S.start(), invoked = false;
+      var seq = S.start();
 
-         for( var i=0; i < 10; i++ ) {
-            seq
-                  .wrap(_now) // establish start time
-                  .wait(100)                                           // wait 100
-                  .wrap(function(start) {                              // check end time
-                     var end = _now(), diff =  end - start;
-                     // we can't actually check for > 100 because for some reason firefox is really unreliable here
-                     ok( (diff >= 100), "Must wait 100ms, waited: "+diff);
-                     return end;
-                  }, S.PREV);
-         }
-
-         ok( !invoked, 'It should not have run by this point');
-
-         seq.end(true)
-               .done(shouldCall)
-               .fail(shouldNotCall);
-
-         return def.promise();
+      for( var i=0; i < 10; i++ ) {
+         seq
+               .wrap(_now) // establish start time
+               .wait(100)                                           // wait 100
+               .wrap(function(start) {                              // check end time
+                  var end = _now(), diff =  end - start;
+                  ok( (diff >= 100), "Must wait 100ms, waited: "+diff);
+                  return end;
+               }, S.PREV);
       }
 
-      jQuery.when(
-         _waits()
-      )
-      .always(function() {
-         start();
-      });
+      seq.end(true)
+            .done(shouldCall)
+            .fail(shouldNotCall)
+            .always(start);
    });
 
    var _now = Date.now || function() {
