@@ -20,7 +20,7 @@ jQuery(function($) {
     Sequence::start()
     ******************************************/
 
-   test('Sequence::start()', function() {
+   asyncTest('Sequence::start()', function() {
       expect(3);
       var seq;
 
@@ -29,7 +29,7 @@ jQuery(function($) {
       ok(seq instanceof S, 'Should be instance of $.Sequence');
 
       // call start and register some functions
-      seq = S.start({ callA: function(){return 'A';}, callB: {fx: function(){return 'B';}} });
+      seq = S.start({ callA: function(){return 'A';}, callB: {fx: function(cb){ cb('B');}, cbPos: 0} });
 
       // make sure the functions were registered
       // since wait() is automagically registered, count is +1
@@ -38,7 +38,8 @@ jQuery(function($) {
          .callB()
          .end()
          .done(shouldCall)
-         .fail(shouldNotCall); // should run without any errors
+         .fail(shouldNotCall) // should run without any errors
+         .always(start);
    });
 
    /******************************************

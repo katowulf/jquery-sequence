@@ -4,6 +4,8 @@
  * Copyright (c) 2012 Michael "Kato" Wulf; Licensed MIT, GPL
  *******************************************/
 (function($) {
+   "use strict";
+
    var undef;
 
    var Sequence = $.Sequence = function() {
@@ -812,8 +814,8 @@
     * @return {Object}
     * @private
     */
-   function _parms(arguments) {
-      var args = $.makeArray(arguments), out = { opts: {}, scope: null }, pos = 0;
+   function _parms(argList) {
+      var args = $.makeArray(argList), out = { opts: {}, scope: null }, pos = 0;
       while(args.length && pos++ < 3) {
          if($.isFunction(args[0])) {
             out.fx = args.shift();
@@ -1098,9 +1100,9 @@
     * @return {*}
     * @private
     */
-   function _result(arguments) {
-      if( arguments.length > 1 ) { return $.makeArray(arguments); }
-      return arguments[0];
+   function _result(argList) {
+      if( argList.length > 1 ) { return $.makeArray(argList); }
+      return argList[0];
    }
 
    /**
@@ -1135,8 +1137,8 @@
                      break;
                   case 'object':
                      o = f;
-                     f = o.fxn || o.fx;
-                     delete o.fxn;
+                     f = o.fx;
+                     delete o.fx;
                      break;
                   default:
                      throw new Error('each element of hash passed into start() must be an object or function');
