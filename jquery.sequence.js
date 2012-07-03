@@ -1136,7 +1136,7 @@
                      o = null;
                      break;
                   case 'object':
-                     o = f;
+                     o = $.extend({}, f); // don't modify the original
                      f = o.fx;
                      delete o.fx;
                      break;
