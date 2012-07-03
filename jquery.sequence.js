@@ -1,5 +1,5 @@
 /*******************************************
- * jQuery-Sequence - v0.2.0 - 2012-07-02
+ * jQuery-Sequence - v0.2.1 - 2012-07-03
  * https://github.com/katowulf/jquery-sequence
  * Copyright (c) 2012 Michael "Kato" Wulf; Licensed MIT, GPL
  *******************************************/
