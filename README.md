@@ -1,6 +1,8 @@
 jQuery-Sequence
 ===============
 
+**Outdated. These days, one could simply use a promise.**
+
 Create sequences of asynchrous/synchronous/anything calls that are guaranteed to run in order. By using promises, we
 remove the callback nesting craziness.
 
